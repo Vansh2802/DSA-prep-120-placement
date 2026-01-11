@@ -10,7 +10,7 @@ function getCurrentDay(cycleStartDate) {
   const startDate = new Date(cycleStartDate);
   const diffTime = Math.abs(now - startDate);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.min(diffDays + 1, 120);
+  return Math.min(diffDays, 120);
 }
 
 // Get all tasks for current user
@@ -21,8 +21,16 @@ router.get('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Cycle not started' });
     }
 
-    const tasks = await Task.find({ userId: req.userId });
+    const tasks = await Task.find({ userId: req.userId }).sort({ dayNumber: 1 });
     const currentDay = getCurrentDay(user.cycleStartDate);
+
+    // Check for missed tasks and mark them
+    for (let task of tasks) {
+      if (!task.completed && !task.missed && task.deadline < new Date()) {
+        task.missed = true;
+        await task.save();
+      }
+    }
 
     res.json({
       tasks,
@@ -34,29 +42,13 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get task for specific day
-router.get('/day/:dayNumber', auth, async (req, res) => {
-  try {
-    const { dayNumber } = req.params;
-
-    const task = await Task.findOne({
-      userId: req.userId,
-      dayNumber: parseInt(dayNumber),
-    });
-
-    res.json(task || null);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Create task for today
+// Create task for a specific day
 router.post('/', auth, async (req, res) => {
   try {
-    const { text } = req.body;
+    const { title, dayNumber } = req.body;
 
-    if (!text || text.trim() === '') {
-      return res.status(400).json({ message: 'Task text is required' });
+    if (!title || !dayNumber) {
+      return res.status(400).json({ message: 'Title and day number required' });
     }
 
     const user = await User.findById(req.userId);
@@ -66,19 +58,19 @@ router.post('/', auth, async (req, res) => {
 
     const currentDay = getCurrentDay(user.cycleStartDate);
 
-    // Check if task already exists for today
+    // Only allow creating tasks for current day or past days
+    if (dayNumber > currentDay) {
+      return res.status(400).json({ message: 'Cannot create task for future days' });
+    }
+
+    // Check if task already exists for this day
     const existingTask = await Task.findOne({
       userId: req.userId,
-      dayNumber: currentDay,
+      dayNumber: dayNumber,
     });
 
     if (existingTask) {
-      return res.status(400).json({ message: 'Task already exists for today' });
-    }
-
-    // Check if cycle is complete
-    if (currentDay > 120) {
-      return res.status(400).json({ message: '120-day cycle is complete' });
+      return res.status(400).json({ message: 'Task already exists for this day' });
     }
 
     // Create deadline (24 hours from now)
@@ -87,8 +79,8 @@ router.post('/', auth, async (req, res) => {
 
     const task = new Task({
       userId: req.userId,
-      text: text.trim(),
-      dayNumber: currentDay,
+      title: title.trim(),
+      dayNumber: dayNumber,
       deadline,
     });
 
@@ -121,6 +113,7 @@ router.patch('/:taskId', auth, async (req, res) => {
     }
 
     task.completed = completed;
+    task.missed = false; // Clear missed flag when task is completed
     await task.save();
 
     res.json({

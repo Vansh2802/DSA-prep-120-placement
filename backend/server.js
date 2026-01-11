@@ -10,20 +10,21 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/placement-prep', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log('✓ MongoDB connected'))
-.catch(err => console.log('✗ MongoDB connection error:', err));
+.catch(err => console.log('✗ MongoDB connection error:', err.message));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/progress', require('./routes/progress'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running' });
+  res.json({ status: 'Server is running', timestamp: new Date() });
 });
 
 // Error handling middleware

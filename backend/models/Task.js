@@ -6,7 +6,7 @@ const TaskSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  text: {
+  title: {
     type: String,
     required: true,
   },
@@ -17,6 +17,10 @@ const TaskSchema = new mongoose.Schema({
     max: 120,
   },
   completed: {
+    type: Boolean,
+    default: false,
+  },
+  missed: {
     type: Boolean,
     default: false,
   },

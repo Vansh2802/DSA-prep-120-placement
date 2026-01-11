@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './pages/Dashboard';
-import './App.css';
+import './styles/index.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,18 +16,26 @@ function App() {
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
-      setUser(JSON.parse(userData));
-      setIsAuthenticated(true);
+      try {
+        setUser(JSON.parse(userData));
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     
     setLoading(false);
   }, []);
 
   const handleAuthSuccess = () => {
-    const userData = JSON.parse(localStorage.getItem('user'));
-    setUser(userData);
-    setIsAuthenticated(true);
-    setShowSignup(false);
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+      setIsAuthenticated(true);
+      setShowSignup(false);
+    }
   };
 
   const handleLogout = () => {
@@ -48,9 +56,11 @@ function App() {
         {showSignup ? (
           <>
             <Signup onSuccess={handleAuthSuccess} />
-            <p className="switch-auth">
+            <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
               Already have an account? 
-              <button onClick={() => setShowSignup(false)}>Login here</button>
+              <button onClick={() => setShowSignup(false)} style={{ background: 'none', border: 'none', color: '#667eea', cursor: 'pointer', fontWeight: '600' }}>
+                Login here
+              </button>
             </p>
           </>
         ) : (

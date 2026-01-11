@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Auth.css';
+import '../styles/index.css';
 
 export default function Signup({ onSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,10 +23,25 @@ export default function Signup({ onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/signup', formData);
+      const response = await axios.post('/api/auth/signup', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       onSuccess();
@@ -39,12 +55,12 @@ export default function Signup({ onSuccess }) {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Create Account</h1>
-        <p className="auth-subtitle">Start your 120-day journey</p>
+        <h1>Join the Challenge</h1>
+        <p className="auth-subtitle">120-Day Placement Prep</p>
         
         {error && <div className="error-message">{error}</div>}
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label>Name</label>
             <input
@@ -81,12 +97,22 @@ export default function Signup({ onSuccess }) {
             />
           </div>
 
+          <div className="form-group">
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+              required
+            />
+          </div>
+
           <button type="submit" disabled={loading} className="submit-btn">
-            {loading ? 'Creating...' : 'Create Account'}
+            {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
-
-        <p className="auth-footer">Already have an account? <a href="#" onClick={e => e.preventDefault()}>Login</a></p>
       </div>
     </div>
   );

@@ -1,39 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import './Timer.css';
 
-export default function Timer({ deadline, completed }) {
+export default function Timer({ deadline }) {
   const [timeLeft, setTimeLeft] = useState('');
-  const [isOverdue, setIsOverdue] = useState(false);
+  const [isWarning, setIsWarning] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
-    const calculateTime = () => {
+    const updateTimer = () => {
       const now = new Date();
       const deadlineDate = new Date(deadline);
-      const diff = deadlineDate - now;
+      const diffMs = deadlineDate - now;
 
-      if (diff <= 0) {
-        setTimeLeft('Overdue');
-        setIsOverdue(true);
+      if (diffMs <= 0) {
+        setTimeLeft('Expired');
+        setIsExpired(true);
+        setIsWarning(false);
         return;
       }
 
-      setIsOverdue(false);
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-      setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      setTimeLeft(`${diffHours}h ${diffMinutes}m left`);
+      setIsWarning(diffHours <= 2);
+      setIsExpired(false);
     };
 
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000); // Update every minute
 
     return () => clearInterval(interval);
   }, [deadline]);
 
-  return (
-    <div className={`timer ${completed ? 'completed' : isOverdue ? 'overdue' : 'active'}`}>
-      {completed ? '✓ Completed' : isOverdue ? '✗ Missed' : `⏱ ${timeLeft}`}
-    </div>
-  );
+  const timerClass = `timer ${isWarning ? 'warning' : ''} ${isExpired ? 'expired' : ''}`;
+
+  return <div className={timerClass}>⏱️ {timeLeft}</div>;
 }
