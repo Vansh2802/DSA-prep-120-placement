@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import '../styles/index.css';
 
 export default function Login({ onSuccess, onSwitchToSignup }) {
@@ -24,7 +24,7 @@ export default function Login({ onSuccess, onSwitchToSignup }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', formData);
+      const response = await api.post('/api/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       onSuccess();

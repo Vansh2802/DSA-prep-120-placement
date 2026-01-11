@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import ProgressRing from '../components/ProgressRing';
 import DayCard from '../components/DayCard';
 import '../styles/index.css';
@@ -22,9 +22,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get('/api/tasks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get('/api/tasks');
       setTasks(response.data.tasks);
       setCurrentDay(response.data.currentDay);
       setCycleStartDate(response.data.cycleStartDate);
@@ -46,9 +44,8 @@ export default function Dashboard({ user, onLogout }) {
     }
 
     try {
-      const response = await axios.post('/api/tasks', 
-        { title: title.trim(), dayNumber },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.post('/api/tasks', 
+        { title: title.trim(), dayNumber }
       );
       setTasks([...tasks, response.data.task]);
       setError('');
@@ -59,10 +56,9 @@ export default function Dashboard({ user, onLogout }) {
 
   const handleToggleTask = async (taskId, completed) => {
     try {
-      const response = await axios.patch(
+      const response = await api.patch(
         `/api/tasks/${taskId}`,
-        { completed: !completed },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { completed: !completed }
       );
       setTasks(tasks.map(t => t._id === taskId ? response.data.task : t));
     } catch (err) {
@@ -73,9 +69,7 @@ export default function Dashboard({ user, onLogout }) {
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Delete this task?')) {
       try {
-        await axios.delete(`/api/tasks/${taskId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await api.delete(`/api/tasks/${taskId}`);
         setTasks(tasks.filter(t => t._id !== taskId));
       } catch (err) {
         setError('Failed to delete task');

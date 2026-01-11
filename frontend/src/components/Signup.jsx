@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import '../styles/index.css';
 
 export default function Signup({ onSuccess }) {
@@ -37,7 +37,7 @@ export default function Signup({ onSuccess }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/signup', {
+      const response = await api.post('/api/auth/signup', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
