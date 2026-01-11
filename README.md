@@ -1,53 +1,251 @@
-# 120-Day Placement Preparation Todo App
+# 120-Day Placement Preparation Challenge App
 
-A full-stack web application designed to help students prepare for placement interviews over a structured 120-day cycle.
+A clean, beginner-friendly full-stack web application for tracking daily progress over a 120-day placement preparation journey.
 
 ## Features
 
-✅ **User Authentication**: Secure signup and login with JWT tokens
-✅ **120-Day Cycle**: Automatically starts on first login
-✅ **Daily Tasks**: Create exactly one task per day
-✅ **24-Hour Timer**: Countdown for each task with persistence across page refreshes
-✅ **Task Completion**: Checkbox to mark tasks as done
-✅ **Task History**: View all past tasks with completion status
-✅ **Progress Tracking**: Visual progress bar showing days completed
-✅ **Responsive Design**: Works seamlessly on desktop and mobile
-✅ **Secure**: Password hashing with bcrypt, JWT authentication
+✅ **120-Day Circular Progress Ring** - Visual representation of your journey completion  
+✅ **Calendar-Style Task Grid** - One task per day, organized in a clean grid layout  
+✅ **24-Hour Task Timers** - Countdown timers for each task with automatic missed detection  
+✅ **JWT Authentication** - Secure login and registration system  
+✅ **MongoDB Persistence** - All data stored securely in the cloud  
+✅ **Responsive Design** - Works perfectly on desktop, tablet, and mobile devices  
+✅ **No Postman Required** - Everything managed through an intuitive web interface  
 
 ## Tech Stack
 
 ### Backend
-- **Node.js** with **Express.js**
-- **MongoDB** for data persistence
+- **Node.js** with Express.js
+- **MongoDB Atlas** for cloud database
 - **JWT** for authentication
-- **Bcrypt** for password hashing
-- **Mongoose** for database modeling
+- **bcryptjs** for password hashing
+- **Nodemon** for development hot reload
 
 ### Frontend
-- **React 18** with functional components
-- **Vite** for fast development and building
+- **React 18** with hooks
+- **Vite** for ultra-fast development and bundling
 - **Axios** for API communication
-- **CSS3** for responsive styling
+- **SVG** for the circular progress ring visualization
+- **Vanilla CSS** with gradient themes (no heavy UI libraries)
 
-## Project Structure
+## Key Components
+
+### Backend Architecture
+- **User Model**: Stores user credentials and cycle start date
+- **Task Model**: Tracks individual tasks with dayNumber (1-120), completion status, and deadline
+- **Authentication Routes**: Signup, login, and user info endpoints
+- **Task Routes**: CRUD operations with missed task detection
+- **Progress Endpoint**: Calculates completion statistics
+
+### Frontend Components
+- **ProgressRing.jsx** - SVG circular progress visualization
+- **DayCard.jsx** - Individual day card with task creation/display
+- **Timer.jsx** - 24-hour countdown timer with warning states
+- **Login.jsx** - Secure login form
+- **Signup.jsx** - User registration with password validation
+- **Dashboard.jsx** - Main interface with 120-day grid layout
+
+## Installation & Setup
+
+### Prerequisites
+- Node.js 16+ and npm
+- MongoDB Atlas account (free tier works)
+- Git
+
+### Backend Setup
+
+```bash
+cd backend
+npm install
+
+# Create .env with:
+MONGODB_URI=mongodb+srv://admin:Vansh%402004@cluster0.bjuty6b.mongodb.net/daily-tracker
+JWT_SECRET=your-secret-key
+PORT=5000
+
+npm run dev  # Starts on http://localhost:5000
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev  # Starts on http://localhost:3000
+```
+
+## Usage Workflow
+
+1. **Sign Up** - Create account with email and password
+2. **Login** - Cycle starts automatically
+3. **View Dashboard** - See circular progress ring (Day X of 120) and 120-day calendar grid
+4. **Add Tasks** - Click on any day card to add a task
+5. **Track Progress** - Watch timers count down (24 hours per task)
+6. **Mark Complete** - Check checkbox to complete task
+7. **Monitor Progress** - Circular ring fills as you progress
+
+## Task Lifecycle
 
 ```
-├── backend/
-│   ├── models/
-│   │   ├── User.js
-│   │   └── Task.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   └── tasks.js
-│   ├── middleware/
-│   │   └── auth.js
-│   ├── server.js
-│   ├── package.json
-│   ├── .env
-│   └── README.md
-│
-├── frontend/
-│   ├── src/
+Created → Pending (24h timer) → [Completed OR Missed]
+  ↓                                    ↓
+[Timer running]                   [Logged in history]
+```
+
+## API Reference
+
+### Auth Endpoints
+- `POST /api/auth/signup` - Register with name, email, password
+- `POST /api/auth/login` - Login with email, password
+- `GET /api/auth/me` - Get current user info
+
+### Task Endpoints
+- `GET /api/tasks` - Get all tasks with current day info
+- `POST /api/tasks` - Create task (body: { title, dayNumber })
+- `PATCH /api/tasks/:taskId` - Update task (body: { completed: bool })
+- `DELETE /api/tasks/:taskId` - Delete task
+
+### Progress Endpoint
+- `GET /api/progress` - Get stats (currentDay, completed, missed, percentage)
+
+## Database Schema
+
+**Users Collection**
+```javascript
+{
+  name: String,
+  email: String (unique),
+  password: String (bcrypt hashed),
+  cycleStartDate: Date,
+  createdAt: Date
+}
+```
+
+**Tasks Collection**
+```javascript
+{
+  userId: ObjectId,
+  dayNumber: Number (1-120, unique per user),
+  title: String,
+  completed: Boolean,
+  missed: Boolean (auto-set if deadline passes),
+  deadline: Date (24 hours from creation),
+  createdAt: Date
+}
+```
+
+## Design Decisions
+
+### One Task Per Day
+- Enforced at database level with unique index on (userId, dayNumber)
+- Ensures focus and manageable workload
+- Simplified UI without overwhelming options
+
+### 24-Hour Timers
+- Auto-detect missed tasks when deadline passes
+- Clear deadline for accountability
+- Timer persists across page refreshes (stored in DB)
+
+### Circular Progress Ring
+- Visual motivation showing journey completion
+- Percentage-based fill for quick understanding
+- SVG for crisp rendering on all devices
+
+### No Heavy UI Libraries
+- Minimal CSS using semantic HTML
+- Fast load times
+- Full control over styling and animations
+- Easy to customize and extend
+
+## Troubleshooting
+
+### "Port 5000 already in use"
+```powershell
+taskkill /F /IM node.exe
+```
+
+### "Cannot connect to MongoDB"
+- Check MongoDB Atlas whitelist includes your IP
+- Verify connection string in .env
+- Ensure cluster is running
+
+### "Signup/Login not working"
+- Clear localStorage: `localStorage.clear()`
+- Restart both servers
+- Check backend console for errors
+
+### "Timers not updating"
+- Check browser console for API errors
+- Verify backend is running
+- Ensure token is valid (may need to re-login)
+
+## Development Commands
+
+```bash
+# Backend
+cd backend && npm run dev
+
+# Frontend
+cd frontend && npm run dev
+
+# Production build
+npm run build
+npm run preview
+```
+
+## Git Workflow
+
+```bash
+git add .
+git commit -m "message"
+git push origin main  # After setting up GitHub remote
+```
+
+## Performance
+
+- **Frontend**: Vite handles hot module replacement
+- **Backend**: Nodemon auto-restarts on changes
+- **Database**: Indexed queries for fast lookups
+- **API**: Minimal endpoints, efficient JSON payloads
+
+## Future Enhancements
+
+- Statistics dashboard
+- Dark mode
+- Email notifications
+- Mobile app (React Native)
+- Offline support
+- Custom challenge lengths
+- Team challenges
+- Achievement badges
+
+## Deployment
+
+### Backend
+- Deploy to Heroku, Railway, or AWS
+- Set env variables on hosting platform
+- Run `node server.js` as start command
+
+### Frontend  
+- Build: `npm run build`
+- Deploy to Vercel, Netlify, or GitHub Pages
+- Update API endpoint in code
+
+## License
+
+MIT License - Open source and free to use
+
+## Support
+
+Questions? Check:
+1. Terminal console for error messages
+2. Browser DevTools Network tab for API issues
+3. MongoDB Atlas dashboard for database status
+4. Backend logs at http://localhost:5000
+
+---
+
+**Ready to start your 120-day challenge?** 🚀
 │   │   ├── components/
 │   │   │   ├── Login.jsx
 │   │   │   ├── Signup.jsx
