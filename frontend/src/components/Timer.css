@@ -1,0 +1,23 @@
+.timer {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 120px;
+}
+
+.timer.active {
+  background-color: #ffe5e5;
+  color: #d32f2f;
+}
+
+.timer.completed {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.timer.overdue {
+  background-color: #ffebee;
+  color: #c62828;
+}
