@@ -24,7 +24,7 @@ export default function Login({ onSuccess, onSwitchToSignup }) {
     setLoading(true);
 
     try {
-      const response = await api.post('/api/auth/login', formData);
+      const response = await api.post('/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       onSuccess();

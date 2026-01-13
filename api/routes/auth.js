@@ -24,6 +24,8 @@ router.post('/signup', async (req, res) => {
       name,
       email,
       password,
+      currentDay: 1,
+      cycleStartDate: new Date(),
     });
 
     await user.save();
@@ -67,11 +69,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Start cycle if not already started
+    // Initialize missing fields for legacy users
     if (!user.cycleStartDate) {
       user.cycleStartDate = new Date();
-      await user.save();
     }
+    if (!user.currentDay) {
+      user.currentDay = 1;
+    }
+    await user.save();
 
     // Create JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -115,6 +120,7 @@ router.post('/start-cycle', auth, async (req, res) => {
     }
 
     user.cycleStartDate = new Date();
+    user.currentDay = 1;
     await user.save();
 
     res.json({

@@ -10,6 +10,8 @@ export default function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cycleStartDate, setCycleStartDate] = useState(null);
+  const [advancing, setAdvancing] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -22,7 +24,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const fetchTasks = async () => {
     try {
-      const response = await api.get('/api/tasks');
+      const response = await api.get('/tasks');
       setTasks(response.data.tasks);
       setCurrentDay(response.data.currentDay);
       setCycleStartDate(response.data.cycleStartDate);
@@ -37,6 +39,44 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
+  const canAdvance = () => {
+    const todaysTasks = tasks.filter(t => t.dayNumber === currentDay);
+    if (!todaysTasks.length) return false;
+    return todaysTasks.every(t => t.completed);
+  };
+
+  const handleAdvanceDay = async () => {
+    setError('');
+    setAdvancing(true);
+    try {
+      const response = await api.post('/progress/advance-day');
+      setCurrentDay(response.data.currentDay);
+      fetchTasks();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not start next day');
+    } finally {
+      setAdvancing(false);
+    }
+  };
+
+  const handleResetCycle = async () => {
+    const confirm = window.confirm('This will delete ALL tasks and restart at Day 1. Continue?');
+    if (!confirm) return;
+
+    setError('');
+    setResetting(true);
+    try {
+      const response = await api.post('/progress/reset-cycle');
+      setCurrentDay(response.data.currentDay);
+      setTasks([]);
+      setCycleStartDate(response.data.cycleStartDate);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not reset cycle');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const handleAddTask = async (dayNumber, title) => {
     if (!title.trim()) {
       setError('Task cannot be empty');
@@ -44,7 +84,7 @@ export default function Dashboard({ user, onLogout }) {
     }
 
     try {
-      const response = await api.post('/api/tasks', 
+      const response = await api.post('/tasks', 
         { title: title.trim(), dayNumber }
       );
       setTasks([...tasks, response.data.task]);
@@ -57,7 +97,7 @@ export default function Dashboard({ user, onLogout }) {
   const handleToggleTask = async (taskId, completed) => {
     try {
       const response = await api.patch(
-        `/api/tasks/${taskId}`,
+        `/tasks/${taskId}`,
         { completed: !completed }
       );
       setTasks(tasks.map(t => t._id === taskId ? response.data.task : t));
@@ -69,7 +109,7 @@ export default function Dashboard({ user, onLogout }) {
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Delete this task?')) {
       try {
-        await api.delete(`/api/tasks/${taskId}`);
+        await api.delete(`/tasks/${taskId}`);
         setTasks(tasks.filter(t => t._id !== taskId));
       } catch (err) {
         setError('Failed to delete task');
@@ -97,7 +137,25 @@ export default function Dashboard({ user, onLogout }) {
           <h1>120-Day Challenge</h1>
           <p>Welcome, {user?.name}</p>
         </div>
-        <button className="logout-btn" onClick={onLogout}>Logout</button>
+        <div className="header-actions">
+          <button
+            className="danger-btn"
+            onClick={handleResetCycle}
+            disabled={resetting}
+            title="Delete all tasks and restart from Day 1"
+          >
+            {resetting ? 'Resetting...' : 'Reset Cycle'}
+          </button>
+          <button
+            className="primary-btn"
+            onClick={handleAdvanceDay}
+            disabled={!canAdvance() || advancing}
+            title={!canAdvance() ? 'Complete today\'s tasks to start next day' : 'Start next day'}
+          >
+            {advancing ? 'Starting...' : `Start Day ${currentDay + 1}`}
+          </button>
+          <button className="logout-btn" onClick={onLogout}>Logout</button>
+        </div>
       </div>
 
       {/* Error Message */}

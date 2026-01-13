@@ -16,6 +16,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  currentDay: {
+    type: Number,
+    default: 1,
+    min: 1,
+    max: 120,
+  },
   cycleStartDate: {
     type: Date,
     default: null,

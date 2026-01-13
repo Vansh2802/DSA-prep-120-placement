@@ -4,15 +4,6 @@ const auth = require('../middleware/auth');
 const Task = require('../models/Task');
 const User = require('../models/User');
 
-// Helper function to calculate current day
-function getCurrentDay(cycleStartDate) {
-  const now = new Date();
-  const startDate = new Date(cycleStartDate);
-  const diffTime = Math.abs(now - startDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.min(diffDays, 120);
-}
-
 // Get all tasks for current user
 router.get('/', auth, async (req, res) => {
   try {
@@ -22,7 +13,7 @@ router.get('/', auth, async (req, res) => {
     }
 
     const tasks = await Task.find({ userId: req.userId }).sort({ dayNumber: 1 });
-    const currentDay = getCurrentDay(user.cycleStartDate);
+    const currentDay = Math.max(1, user.currentDay || 1);
 
     // Check for missed tasks and mark them
     for (let task of tasks) {
@@ -56,7 +47,7 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Cycle not started' });
     }
 
-    const currentDay = getCurrentDay(user.cycleStartDate);
+    const currentDay = Math.max(1, user.currentDay || 1);
 
     // Only allow creating tasks for current day or past days
     if (dayNumber > currentDay) {
